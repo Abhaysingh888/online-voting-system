@@ -1,0 +1,393 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — VoteSecure</title>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    /* ── Election Timer Card ── */
+    .election-timer {
+      border-radius: 18px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 1.8rem;
+      text-align: center;
+      position: relative; overflow: hidden;
+      animation: fadeUp 0.5s ease both;
+    }
+    .election-timer.ongoing {
+      background: linear-gradient(135deg, rgba(201,168,76,0.12), rgba(232,201,109,0.06));
+      border: 2px solid rgba(201,168,76,0.35);
+    }
+    .election-timer.ended {
+      background: rgba(231,76,60,0.08);
+      border: 2px solid rgba(231,76,60,0.3);
+    }
+    .election-timer.upcoming {
+      background: rgba(52,152,219,0.08);
+      border: 2px solid rgba(52,152,219,0.3);
+    }
+    .election-timer.no-election {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .timer-label {
+      font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.15em;
+      margin-bottom: 0.5rem;
+    }
+    .timer-label.gold  { color: var(--gold); }
+    .timer-label.red   { color: #ff8a7a; }
+    .timer-label.blue  { color: #74b9ff; }
+    .timer-label.muted { color: var(--muted); }
+
+    .timer-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem; margin-bottom: 1rem;
+    }
+
+    /* Countdown digits */
+    .countdown-row {
+      display: flex; align-items: center;
+      justify-content: center; gap: 0.5rem;
+      margin-bottom: 0.8rem;
+    }
+    .countdown-unit {
+      text-align: center;
+    }
+    .countdown-digit {
+      font-family: var(--font-display);
+      font-size: 3rem; line-height: 1;
+      color: var(--white);
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 12px;
+      padding: 0.4rem 0.8rem;
+      min-width: 72px;
+      display: inline-block;
+    }
+    .countdown-unit-label {
+      font-size: 0.65rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-top: 0.3rem;
+    }
+    .countdown-sep {
+      font-family: var(--font-display);
+      font-size: 2rem; color: var(--gold);
+      margin-bottom: 1.2rem;
+    }
+
+    .timer-dates {
+      display: flex; justify-content: center; gap: 2rem;
+      font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .timer-dates span { display: flex; align-items: center; gap: 0.3rem; }
+
+    /* Ended banner */
+    .ended-text {
+      font-family: var(--font-display);
+      font-size: 1.6rem; color: #ff8a7a;
+    }
+    .upcoming-text {
+      font-family: var(--font-display);
+      font-size: 1.6rem; color: #74b9ff;
+    }
+  </style>
+</head>
+<body>
+<div id="page-loader"><div class="loader-ring"></div><div class="loader-text">VoteSecure</div></div>
+<div id="toast-container"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="{% url 'home' %}" class="nav-brand">🗳️ VoteSecure</a>
+  <div class="nav-actions">
+    <button class="dark-toggle" id="dark-toggle">☀️</button>
+    <span class="btn-nav btn-nav-ghost" style="cursor:default">
+      <i class="fas fa-user"></i> {{ request.user.username }}
+    </span>
+    <a href="{% url 'results' %}" class="btn-nav btn-nav-ghost">
+      <i class="fas fa-chart-bar"></i> Results
+    </a>
+    <a href="{% url 'logout' %}" class="btn-nav btn-nav-danger">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
+  </div>
+</nav>
+
+{% for message in messages %}
+  <div class="flash-msg {% if message.tags == 'error' %}error{% else %}success{% endif %}" style="display:none">
+    {{ message }}
+  </div>
+{% endfor %}
+
+<div style="max-width:1100px;margin:0 auto;padding:2rem 1.5rem;">
+
+  <!-- ── ELECTION TIMER ── -->
+  {% if election %}
+
+    {% if election.is_ongoing %}
+      <!-- ONGOING — Live Countdown -->
+      <div class="election-timer ongoing">
+        <div class="timer-label gold">
+          <i class="fas fa-circle" style="font-size:.6rem;color:#27ae60"></i>
+          &nbsp;Election in Progress
+        </div>
+        <div class="timer-title">{{ election.title }}</div>
+
+        <div class="countdown-row">
+          <div class="countdown-unit">
+            <div class="countdown-digit" id="cd-hours">00</div>
+            <div class="countdown-unit-label">Hours</div>
+          </div>
+          <div class="countdown-sep">:</div>
+          <div class="countdown-unit">
+            <div class="countdown-digit" id="cd-mins">00</div>
+            <div class="countdown-unit-label">Minutes</div>
+          </div>
+          <div class="countdown-sep">:</div>
+          <div class="countdown-unit">
+            <div class="countdown-digit" id="cd-secs">00</div>
+            <div class="countdown-unit-label">Seconds</div>
+          </div>
+        </div>
+
+        <div class="timer-dates">
+          <span><i class="fas fa-play-circle"></i> Started: {{ election.start_time|date:"d M Y, h:i A" }}</span>
+          <span><i class="fas fa-stop-circle"></i> Ends: {{ election.end_time|date:"d M Y, h:i A" }}</span>
+        </div>
+      </div>
+
+    {% elif election.has_ended %}
+      <!-- ENDED -->
+      <div class="election-timer ended">
+        <div class="timer-label red">
+          <i class="fas fa-lock"></i> &nbsp;Voting Closed
+        </div>
+        <div class="ended-text">🔒 Election Has Ended</div>
+        <p style="color:var(--muted);margin-top:.5rem;font-size:.88rem">
+          Ended on {{ election.end_time|date:"d M Y, h:i A" }}
+        </p>
+        <a href="{% url 'results' %}"
+           style="display:inline-block;margin-top:1rem;padding:.6rem 1.5rem;
+                  background:linear-gradient(135deg,var(--gold),var(--gold2));
+                  border-radius:50px;color:var(--navy);font-weight:700;text-decoration:none">
+          View Final Results →
+        </a>
+      </div>
+
+    {% else %}
+      <!-- UPCOMING -->
+      <div class="election-timer upcoming">
+        <div class="timer-label blue">
+          <i class="fas fa-clock"></i> &nbsp;Election Upcoming
+        </div>
+        <div class="upcoming-text">⏳ Voting Not Started Yet</div>
+        <p style="color:var(--muted);margin-top:.5rem;font-size:.88rem">
+          Starts on {{ election.start_time|date:"d M Y, h:i A" }}
+        </p>
+      </div>
+    {% endif %}
+
+  {% else %}
+    <!-- NO ELECTION SET -->
+    <div class="election-timer no-election">
+      <div class="timer-label muted"><i class="fas fa-info-circle"></i> &nbsp;No Election Scheduled</div>
+      <p style="color:var(--muted);font-size:.88rem;margin-top:.3rem">
+        Admin panel se election set karein.
+      </p>
+    </div>
+  {% endif %}
+
+  <!-- ── STATS ── -->
+  <div class="stats-grid">
+    <div class="stat-card delay-1">
+      <div class="stat-num">{{ candidates.count }}</div>
+      <div class="stat-lbl"><i class="fas fa-users"></i> Candidates</div>
+    </div>
+    <div class="stat-card delay-2">
+      <div class="stat-num">{{ total_votes }}</div>
+      <div class="stat-lbl"><i class="fas fa-vote-yea"></i> Total Votes</div>
+    </div>
+    <div class="stat-card delay-3">
+      <div class="stat-num">{% if user_voted %}✓{% else %}—{% endif %}</div>
+      <div class="stat-lbl"><i class="fas fa-check-circle"></i> Your Status</div>
+    </div>
+    <div class="stat-card delay-4">
+      <div class="stat-num">{% if election and election.is_ongoing %}🟢{% elif election and election.has_ended %}🔴{% else %}⏳{% endif %}</div>
+      <div class="stat-lbl">Election Status</div>
+    </div>
+  </div>
+
+  <!-- ── VOTED BANNER ── -->
+  {% if user_voted %}
+    <div class="voted-banner">
+      <span style="font-size:1.8rem">✅</span>
+      <div class="voted-text">
+        <strong>Vote Submitted!</strong><br>
+        <span>You voted for <strong style="color:#6fcf97">{{ user_vote.candidate.name }}</strong>
+        — {{ user_vote.candidate.party }}</span>
+      </div>
+      <a href="{% url 'results' %}" class="btn-results-link">
+        <i class="fas fa-chart-bar"></i> View Results
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- ── CANDIDATES ── -->
+  <div class="section-title">
+    <i class="fas fa-trophy" style="color:var(--gold)"></i>
+    <span class="accent">Candidates</span>
+    {% if can_vote %}
+      <span style="font-size:0.78rem;color:var(--muted);font-family:var(--font-body);font-weight:400;margin-left:auto">
+        <i class="fas fa-info-circle"></i> Click to cast your vote
+      </span>
+    {% endif %}
+  </div>
+
+  {% if candidates %}
+    <div class="candidates-grid">
+      {% for candidate in candidates %}
+        <div class="candidate-card">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.8rem">
+            <div class="c-avatar">{{ candidate.name|first }}</div>
+            <div style="flex:1">
+              <div class="c-name">{{ candidate.name }}</div>
+              <div class="c-party"><i class="fas fa-flag" style="font-size:.7rem"></i> {{ candidate.party }}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="c-vote-num">{{ candidate.votes }}</div>
+              <div style="color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em">votes</div>
+            </div>
+          </div>
+
+          <div class="vote-progress">
+            <div class="vote-fill"
+              style="width:{% if total_votes > 0 %}{% widthratio candidate.votes total_votes 100 %}%{% else %}0%{% endif %}">
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-bottom:1rem">
+            <span>{{ candidate.party }}</span>
+            <span>{% if total_votes > 0 %}{% widthratio candidate.votes total_votes 100 %}%{% else %}0%{% endif %}</span>
+          </div>
+
+          {% if can_vote %}
+            <form method="POST" action="{% url 'vote' %}" class="vote-form" data-candidate="{{ candidate.name }}">
+              {% csrf_token %}
+              <input type="hidden" name="candidate_id" value="{{ candidate.id }}"/>
+              <button type="submit" class="btn-vote-card">
+                <i class="fas fa-check-circle"></i> &nbsp;Vote for {{ candidate.name }}
+              </button>
+            </form>
+
+          {% elif user_voted %}
+            <div style="text-align:center;padding:.6rem;color:var(--muted);font-size:.82rem;
+                        border:1px solid rgba(255,255,255,0.07);border-radius:8px">
+              <i class="fas fa-lock"></i> Already Voted
+            </div>
+
+          {% elif election and election.has_ended %}
+            <div style="text-align:center;padding:.6rem;color:#ff8a7a;font-size:.82rem;
+                        border:1px solid rgba(231,76,60,0.2);border-radius:8px">
+              <i class="fas fa-ban"></i> Voting Closed
+            </div>
+
+          {% elif election and not election.has_started %}
+            <div style="text-align:center;padding:.6rem;color:#74b9ff;font-size:.82rem;
+                        border:1px solid rgba(52,152,219,0.2);border-radius:8px">
+              <i class="fas fa-clock"></i> Voting Not Started
+            </div>
+
+          {% else %}
+            <div style="text-align:center;padding:.6rem;color:var(--muted);font-size:.82rem;
+                        border:1px solid rgba(255,255,255,0.07);border-radius:8px">
+              <i class="fas fa-info-circle"></i> No Active Election
+            </div>
+          {% endif %}
+
+        </div>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <div style="text-align:center;padding:4rem;color:var(--muted)">
+      <div style="font-size:4rem;margin-bottom:1rem">🗳️</div>
+      <p>No candidates yet.<br>
+        <span style="font-size:.85rem">Admin panel se candidates add karein.</span>
+      </p>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- CHATBOT -->
+<button id="chatbot-toggle">🤖</button>
+<div id="chatbot-box">
+  <div class="chat-header">
+    <div class="chat-header-avatar">🤖</div>
+    <div class="chat-header-info">
+      <div class="chat-header-name">VoteBot AI</div>
+      <div class="chat-header-status">● Online</div>
+    </div>
+    <button class="chat-close" id="chat-close">✕</button>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-quick">
+    <button class="quick-btn">How to vote?</button>
+    <button class="quick-btn">View results</button>
+    <button class="quick-btn">Security</button>
+  </div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chat-input" placeholder="Ask me anything..."/>
+    <button class="chat-send" id="chat-send">➤</button>
+  </div>
+</div>
+
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+  // ── Live Countdown Timer ──
+  let totalSeconds = {{ time_seconds }};
+
+  function updateTimer() {
+    if (totalSeconds <= 0) {
+      document.getElementById('cd-hours').textContent = '00';
+      document.getElementById('cd-mins').textContent  = '00';
+      document.getElementById('cd-secs').textContent  = '00';
+      setTimeout(() => location.reload(), 1500);
+      return;
+    }
+
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+
+    const el_h = document.getElementById('cd-hours');
+    const el_m = document.getElementById('cd-mins');
+    const el_s = document.getElementById('cd-secs');
+
+    if (el_h) el_h.textContent = String(h).padStart(2, '0');
+    if (el_m) el_m.textContent = String(m).padStart(2, '0');
+    if (el_s) el_s.textContent = String(s).padStart(2, '0');
+
+    // Turn red when < 5 minutes
+    if (totalSeconds < 300) {
+      [el_h, el_m, el_s].forEach(el => {
+        if (el) el.style.color = '#ff8a7a';
+      });
+    }
+
+    totalSeconds--;
+  }
+
+  if (totalSeconds > 0) {
+    updateTimer();
+    setInterval(updateTimer, 1000);
+  }
+</script>
+</body>
+</html>

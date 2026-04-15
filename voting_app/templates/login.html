@@ -1,0 +1,100 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — VoteSecure</title>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+</head>
+<body>
+<div id="page-loader"><div class="loader-ring"></div><div class="loader-text">VoteSecure</div></div>
+<div id="toast-container"></div>
+
+<nav class="navbar">
+  <a href="{% url 'home' %}" class="nav-brand">🗳️ VoteSecure</a>
+  <div class="nav-actions">
+    <button class="dark-toggle" id="dark-toggle">☀️</button>
+    <a href="{% url 'register' %}" class="btn-nav btn-nav-gold">Register</a>
+  </div>
+</nav>
+
+{% for message in messages %}
+  <div class="flash-msg {% if message.tags == 'error' %}error{% else %}success{% endif %}" style="display:none">{{ message }}</div>
+{% endfor %}
+
+<div class="auth-page">
+  <div class="glass-card auth-card">
+    <div class="auth-brand">
+      <div class="auth-icon">🗳️</div>
+      <h1 class="auth-title">Welcome Back</h1>
+      <p class="auth-sub">Login to cast your vote securely</p>
+    </div>
+
+    <form method="POST" action="{% url 'login' %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <div style="position:relative">
+          <i class="fas fa-user input-icon"></i>
+          <input type="text" name="username" class="form-input" placeholder="Enter username" required autofocus/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="display:flex;justify-content:space-between">
+          Password
+          <a href="{% url 'forgot_password' %}" class="forgot-link" style="float:none;margin-top:0">Forgot?</a>
+        </label>
+        <div style="position:relative">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" name="password" id="pwd-field" class="form-input" placeholder="Enter password" required/>
+          <button type="button" id="toggle-pwd"
+            style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted)">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div class="tooltip-hint"><i class="fas fa-circle-info"></i> Password is case-sensitive</div>
+      </div>
+      <button type="submit" class="btn-primary"><i class="fas fa-sign-in-alt"></i> &nbsp;Login to VoteSecure</button>
+    </form>
+
+    <div class="divider-text" style="margin-top:1.5rem">New here?</div>
+    <a href="{% url 'register' %}" class="auth-link">Create Account →</a>
+  </div>
+</div>
+
+<button id="chatbot-toggle">🤖</button>
+<div id="chatbot-box">
+  <div class="chat-header">
+    <div class="chat-header-avatar">🤖</div>
+    <div class="chat-header-info">
+      <div class="chat-header-name">VoteBot AI</div>
+      <div class="chat-header-status">● Online</div>
+    </div>
+    <button class="chat-close" id="chat-close">✕</button>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-quick">
+    <button class="quick-btn">Login help</button>
+    <button class="quick-btn">Forgot password</button>
+    <button class="quick-btn">How to vote?</button>
+  </div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chat-input" placeholder="Ask me anything..."/>
+    <button class="chat-send" id="chat-send">➤</button>
+  </div>
+</div>
+
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+  const toggleBtn = document.getElementById('toggle-pwd');
+  const pwdField  = document.getElementById('pwd-field');
+  if (toggleBtn) toggleBtn.addEventListener('click', () => {
+    const t = pwdField.type === 'text';
+    pwdField.type = t ? 'password' : 'text';
+    toggleBtn.innerHTML = t ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+  });
+</script>
+</body>
+</html>

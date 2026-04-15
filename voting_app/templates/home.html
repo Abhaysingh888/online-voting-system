@@ -1,0 +1,166 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VoteSecure — Digital Voting Platform</title>
+
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    /* Video Background */
+    .hero-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.25;
+      z-index: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- LOADER -->
+<div id="page-loader">
+  <div class="loader-ring"></div>
+  <div class="loader-text">VoteSecure</div>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="{% url 'home' %}" class="nav-brand">🗳️ VoteSecure</a>
+  <div class="nav-actions">
+    <button class="dark-toggle" id="dark-toggle">☀️</button>
+    <a href="{% url 'about' %}" class="btn-nav btn-nav-ghost">About</a>
+    <a href="{% url 'login' %}" class="btn-nav btn-nav-ghost">Login</a>
+    <a href="{% url 'register' %}" class="btn-nav btn-nav-gold">Get Started</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+
+  <!-- 🎬 VIDEO BACKGROUND -->
+  <video autoplay muted loop playsinline class="hero-video">
+    <source src="{% static 'video/vote-bg.mp4' %}" type="video/mp4">
+  </video>
+
+  <div class="hero-bg"></div>
+
+  <div class="hero-content">
+
+    <div class="hero-badge">
+      <i class="fas fa-shield-halved"></i>
+      Secure • Transparent • Trusted
+    </div>
+
+    <!-- 🔥 HIGH-CONVERTING TITLE -->
+    <h1 class="hero-title">
+      Power the Future of <br>
+      <span class="gold">Digital Democracy</span>
+    </h1>
+
+    <!-- 💰 SELLING TEXT -->
+    <p class="hero-sub">
+      Experience next-generation online voting with military-grade security,
+      real-time transparency, and seamless user experience.
+      Built for institutions, colleges, and organizations
+      that demand trust, speed, and accuracy.
+    </p>
+
+    <!-- 🚀 CTA BUTTONS -->
+    <div class="hero-buttons">
+      <a href="{% url 'register' %}" class="btn-hero-primary">
+        🚀 Launch Your Election
+      </a>
+      <a href="{% url 'login' %}" class="btn-hero-ghost">
+        🔐 Secure Login
+      </a>
+    </div>
+
+    <!-- 📊 STATS -->
+    <div class="hero-stats">
+      <div>
+        <div class="hero-stat-num">100%</div>
+        <div class="hero-stat-lbl">Secure</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">1</div>
+        <div class="hero-stat-lbl">Vote / User</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">Live</div>
+        <div class="hero-stat-lbl">Results</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section style="padding:5rem 2rem; max-width:1100px; margin:auto;">
+  <h2 style="text-align:center;font-size:2.2rem;margin-bottom:10px;">
+    Why <span style="color:#c9a84c;">VoteSecure?</span>
+  </h2>
+
+  <p style="text-align:center;color:#aaa;margin-bottom:40px;">
+    Built with cutting-edge technology to ensure trust and performance
+  </p>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;">
+
+    <div class="glass-card" style="padding:20px;text-align:center;">
+      <div style="font-size:2.5rem;">🔒</div>
+      <h3>Secure Voting</h3>
+      <p>End-to-end encrypted voting ensures maximum data protection.</p>
+    </div>
+
+    <div class="glass-card" style="padding:20px;text-align:center;">
+      <div style="font-size:2.5rem;">👤</div>
+      <h3>One Vote Policy</h3>
+      <p>Each user can vote only once with strict validation system.</p>
+    </div>
+
+    <div class="glass-card" style="padding:20px;text-align:center;">
+      <div style="font-size:2.5rem;">📊</div>
+      <h3>Live Results</h3>
+      <p>See real-time election results instantly with analytics.</p>
+    </div>
+
+    <div class="glass-card" style="padding:20px;text-align:center;">
+      <div style="font-size:2.5rem;">📱</div>
+      <h3>Responsive</h3>
+      <p>Fully optimized for mobile, tablet, and desktop devices.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="text-align:center;padding:60px 20px;">
+  <div class="glass-card" style="padding:40px;max-width:600px;margin:auto;">
+    <h2>Ready to Transform Voting?</h2>
+    <p style="color:#aaa;margin:15px 0;">
+      Join the next generation of digital voting platforms today.
+    </p>
+    <a href="{% url 'register' %}" class="btn-hero-primary">
+      Create Free Account →
+    </a>
+  </div>
+</section>
+
+<!-- JS -->
+<script>
+  window.onload = () => {
+    document.getElementById("page-loader").classList.add("hidden");
+  };
+</script>
+
+</body>
+</html>

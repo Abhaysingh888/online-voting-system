@@ -1,0 +1,125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register — VoteSecure</title>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+</head>
+<body>
+<div id="page-loader"><div class="loader-ring"></div><div class="loader-text">VoteSecure</div></div>
+<div id="toast-container"></div>
+
+<nav class="navbar">
+  <a href="{% url 'home' %}" class="nav-brand">🗳️ VoteSecure</a>
+  <div class="nav-actions">
+    <button class="dark-toggle" id="dark-toggle">☀️</button>
+    <a href="{% url 'login' %}" class="btn-nav btn-nav-ghost">Login</a>
+  </div>
+</nav>
+
+{% for message in messages %}
+  <div class="flash-msg {% if message.tags == 'error' %}error{% else %}success{% endif %}" style="display:none">{{ message }}</div>
+{% endfor %}
+
+<div class="auth-page">
+  <div class="glass-card auth-card" style="max-width:480px">
+    <div class="auth-brand">
+      <div class="auth-icon">✨</div>
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-sub">Join VoteSecure and make your voice heard</p>
+    </div>
+
+    <form method="POST" action="{% url 'register' %}">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <div style="position:relative">
+          <i class="fas fa-user input-icon"></i>
+          <input type="text" name="username" class="form-input" placeholder="Choose a username" required autofocus/>
+        </div>
+        <div class="tooltip-hint"><i class="fas fa-circle-info"></i> Only letters, numbers, and underscores</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <div style="position:relative">
+          <i class="fas fa-envelope input-icon"></i>
+          <input type="email" name="email" class="form-input" placeholder="your@email.com" required/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div style="position:relative">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" name="password" id="password" class="form-input" placeholder="Create strong password" required/>
+          <button type="button" id="toggle-pwd"
+            style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted)">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <!-- Password Strength Bar -->
+        <div class="strength-bar" style="margin-top:8px">
+          <div class="strength-fill" id="strength-fill"></div>
+        </div>
+        <div class="strength-text" id="strength-text" style="color:var(--muted)"></div>
+        <div class="tooltip-hint"><i class="fas fa-circle-info"></i> Use 8+ chars, uppercase, numbers & symbols</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Confirm Password</label>
+        <div style="position:relative">
+          <i class="fas fa-shield-halved input-icon"></i>
+          <input type="password" name="confirm_password" id="confirm_password" class="form-input" placeholder="Repeat your password" required/>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary">
+        <i class="fas fa-user-plus"></i> &nbsp;Create Account
+      </button>
+    </form>
+
+    <div class="divider-text" style="margin-top:1.5rem">Already have an account?</div>
+    <a href="{% url 'login' %}" class="auth-link">Login Here →</a>
+  </div>
+</div>
+
+<button id="chatbot-toggle">🤖</button>
+<div id="chatbot-box">
+  <div class="chat-header">
+    <div class="chat-header-avatar">🤖</div>
+    <div class="chat-header-info">
+      <div class="chat-header-name">VoteBot AI</div>
+      <div class="chat-header-status">● Online</div>
+    </div>
+    <button class="chat-close" id="chat-close">✕</button>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-quick">
+    <button class="quick-btn">Register help</button>
+    <button class="quick-btn">Password rules</button>
+    <button class="quick-btn">How to vote?</button>
+  </div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chat-input" placeholder="Ask me anything..."/>
+    <button class="chat-send" id="chat-send">➤</button>
+  </div>
+</div>
+
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+  // Show/hide password
+  const toggleBtn = document.getElementById('toggle-pwd');
+  const pwdField  = document.getElementById('password');
+  if (toggleBtn) toggleBtn.addEventListener('click', () => {
+    const t = pwdField.type === 'text';
+    pwdField.type = t ? 'password' : 'text';
+    toggleBtn.innerHTML = t ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+  });
+</script>
+</body>
+</html>

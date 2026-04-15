@@ -1,0 +1,226 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Results — VoteSecure</title>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div id="page-loader"><div class="loader-ring"></div><div class="loader-text">VoteSecure</div></div>
+<div id="toast-container"></div>
+
+<nav class="navbar">
+  <a href="{% url 'home' %}" class="nav-brand">🗳️ VoteSecure</a>
+  <div class="nav-actions">
+    <button class="dark-toggle" id="dark-toggle">☀️</button>
+    <a href="{% url 'dashboard' %}" class="btn-nav btn-nav-ghost">
+      <i class="fas fa-arrow-left"></i> Dashboard
+    </a>
+    <a href="{% url 'logout' %}" class="btn-nav btn-nav-danger">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
+  </div>
+</nav>
+
+<div style="max-width:1000px;margin:0 auto;padding:2rem 1.5rem;">
+
+  <!-- ELECTION STATUS BANNER -->
+  {% if election %}
+    <div style="text-align:center;margin-bottom:1.5rem">
+      {% if election.has_ended %}
+        <span style="background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.3);
+                     color:#ff8a7a;border-radius:50px;padding:.4rem 1.2rem;font-size:.82rem;font-weight:700">
+          🔒 Election Ended — {{ election.end_time|date:"d M Y, h:i A" }}
+        </span>
+      {% elif election.is_ongoing %}
+        <span style="background:rgba(39,174,96,0.12);border:1px solid rgba(39,174,96,0.3);
+                     color:#6fcf97;border-radius:50px;padding:.4rem 1.2rem;font-size:.82rem;font-weight:700">
+          🟢 Election In Progress — Live Results
+        </span>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <!-- WINNER CARD -->
+  {% if winner and total_votes > 0 %}
+    <div class="winner-card">
+      <div class="trophy-icon">🏆</div>
+      <div class="winner-label">
+        {% if election and election.has_ended %}Final Winner{% else %}Current Leader{% endif %}
+      </div>
+      <div class="winner-name">{{ winner.name }}</div>
+      <div class="winner-party">{{ winner.party }}</div>
+      <div class="winner-votes-badge">
+        <i class="fas fa-vote-yea"></i> {{ winner.votes }} votes —
+        {% widthratio winner.votes total_votes 100 %}% of total
+      </div>
+    </div>
+  {% elif total_votes == 0 %}
+    <div class="glass-card" style="padding:2.5rem;text-align:center;margin-bottom:2rem">
+      <div style="font-size:3.5rem;margin-bottom:1rem">🗳️</div>
+      <p style="color:var(--muted);font-size:1rem">No votes cast yet.</p>
+      <a href="{% url 'dashboard' %}" style="color:var(--gold);text-decoration:none;
+         font-weight:600;margin-top:.8rem;display:inline-block">
+        Go Cast Your Vote →
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- STATS -->
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat-card">
+      <div class="stat-num">{{ total_votes }}</div>
+      <div class="stat-lbl"><i class="fas fa-vote-yea"></i> Total Votes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ candidates.count }}</div>
+      <div class="stat-lbl"><i class="fas fa-users"></i> Candidates</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">
+        {% if election and election.has_ended %}🔒{% elif election and election.is_ongoing %}🟢{% else %}⏳{% endif %}
+      </div>
+      <div class="stat-lbl">Status</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.3rem;margin-bottom:2rem">
+    <div class="glass-card" style="padding:1.5rem">
+      <div class="section-title" style="font-size:1.1rem;margin-bottom:1rem">
+        <i class="fas fa-chart-bar" style="color:var(--gold)"></i>
+        <span class="accent">Vote Comparison</span>
+      </div>
+      <canvas id="barChart" height="180"></canvas>
+    </div>
+    <div class="glass-card" style="padding:1.5rem">
+      <div class="section-title" style="font-size:1.1rem;margin-bottom:1rem">
+        <i class="fas fa-chart-pie" style="color:var(--gold)"></i>
+        <span class="accent">Vote Share</span>
+      </div>
+      <canvas id="doughnutChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="section-title">
+    <i class="fas fa-medal" style="color:var(--gold)"></i>
+    <span class="accent">Leaderboard</span>
+  </div>
+
+  {% for candidate in candidates %}
+    <div class="leader-row {% if forloop.first %}first{% endif %}"
+         style="animation-delay:{{ forloop.counter0 }}00ms">
+      <div class="rank-badge">
+        {% if forloop.first %}🥇{% elif forloop.counter == 2 %}🥈
+        {% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}
+      </div>
+      <div class="c-avatar" style="width:44px;height:44px;font-size:1rem">
+        {{ candidate.name|first }}
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.95rem">{{ candidate.name }}</div>
+        <div style="color:var(--muted);font-size:.78rem">{{ candidate.party }}</div>
+        <div class="l-bar-bg">
+          <div class="l-bar-fill"
+            style="width:{% if total_votes > 0 %}{% widthratio candidate.votes total_votes 100 %}%{% else %}0%{% endif %}">
+          </div>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--gold);line-height:1">
+          {{ candidate.votes }}
+        </div>
+        <div class="vote-pct">
+          {% if total_votes > 0 %}{% widthratio candidate.votes total_votes 100 %}%{% else %}0%{% endif %}
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div style="text-align:center;padding:3rem;color:var(--muted)">
+      <i class="fas fa-chart-bar" style="font-size:3rem;opacity:.3"></i>
+      <p style="margin-top:1rem">No votes yet.</p>
+    </div>
+  {% endfor %}
+
+</div>
+
+<!-- CHATBOT -->
+<button id="chatbot-toggle">🤖</button>
+<div id="chatbot-box">
+  <div class="chat-header">
+    <div class="chat-header-avatar">🤖</div>
+    <div class="chat-header-info">
+      <div class="chat-header-name">VoteBot AI</div>
+      <div class="chat-header-status">● Online</div>
+    </div>
+    <button class="chat-close" id="chat-close">✕</button>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-quick">
+    <button class="quick-btn">Who is winning?</button>
+    <button class="quick-btn">How to vote?</button>
+    <button class="quick-btn">Security</button>
+  </div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chat-input" placeholder="Ask me anything..."/>
+    <button class="chat-send" id="chat-send">➤</button>
+  </div>
+</div>
+
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+  const labels = [{% for c in candidates %}"{{ c.name }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+  const data   = [{% for c in candidates %}{{ c.votes }}{% if not forloop.last %},{% endif %}{% endfor %}];
+  const colors = ['#c9a84c','#e8c96d','#a07830','#f0d080','#8a6520','#d4b55a'];
+
+  const tooltipStyle = {
+    backgroundColor: '#0a1628',
+    borderColor: '#c9a84c', borderWidth: 1,
+    titleColor: '#c9a84c', bodyColor: '#ffffff',
+    padding: 10, cornerRadius: 8,
+  };
+
+  new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: colors, borderRadius: 8, borderSkipped: false }]
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 1200, easing: 'easeInOutQuart' },
+      plugins: { legend: { display: false }, tooltip: { callbacks: {}, ...tooltipStyle } },
+      scales: {
+        x: { ticks:{color:'rgba(255,255,255,0.55)'}, grid:{color:'rgba(255,255,255,0.05)'} },
+        y: { ticks:{color:'rgba(255,255,255,0.55)'}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('doughnutChart'), {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: colors, borderWidth: 3, borderColor: '#0a1628', hoverOffset: 10 }]
+    },
+    options: {
+      responsive: true,
+      cutout: '65%',
+      animation: { duration: 1200, easing: 'easeInOutQuart' },
+      plugins: {
+        legend: {
+          display: true, position: 'bottom',
+          labels: { color: 'rgba(255,255,255,0.6)', padding: 12, font: { size: 11 } }
+        },
+        tooltip: tooltipStyle
+      }
+    }
+  });
+</script>
+</body>
+</html>
