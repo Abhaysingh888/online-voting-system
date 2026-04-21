@@ -12,24 +12,31 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# ═══════════════════════════════════════════════
+# BASE DIRECTORY
+# ═══════════════════════════════════════════════
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-_p7$#)%94lt90r=hvpp^!&th@=zsmpyah+3_6yk!rsm$j4jpde'
+# ═══════════════════════════════════════════════
+# SECURITY SETTINGS
+# ═══════════════════════════════════════════════
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+SECRET_KEY = 'django-insecure-abc123xyz456'
 
-ALLOWED_HOSTS = ['*']
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '.onrender.com',   # Render deploy support
+]
 
 
-# Application definition
-
+# ═══════════════════════════════════════════════
+# INSTALLED APPS
+# ═══════════════════════════════════════════════
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,13 +44,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'voting_app', 
+
+    'voting_app',
 ]
 
+
+# ═══════════════════════════════════════════════
+# MIDDLEWARE
+# ═══════════════════════════════════════════════
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
 
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # 👈 YE LINE ADD KARO
+    # WhiteNoise (Static files serve karega)
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -51,18 +64,23 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
 ]
+
 
 ROOT_URLCONF = 'voting_system.urls'
 
+
+# ═══════════════════════════════════════════════
+# TEMPLATES
+# ═══════════════════════════════════════════════
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],   # global templates folder
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -74,9 +92,9 @@ TEMPLATES = [
 WSGI_APPLICATION = 'voting_system.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
+# ═══════════════════════════════════════════════
+# DATABASE
+# ═══════════════════════════════════════════════
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -85,42 +103,102 @@ DATABASES = {
 }
 
 
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
+# ═══════════════════════════════════════════════
+# PASSWORD VALIDATION
+# ═══════════════════════════════════════════════
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+     'OPTIONS': {'min_length': 8}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
-
+# ═══════════════════════════════════════════════
+# INTERNATIONALIZATION
+# ═══════════════════════════════════════════════
 LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
+TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
-
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+# ═══════════════════════════════════════════════
+# STATIC FILES (FIXED ✔️)
+# ═══════════════════════════════════════════════
+STATIC_URL = '/static/'
 
-STATIC_URL = 'static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'voting_app', 'static')
+    BASE_DIR / 'voting_app' / 'static',
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise storage (important)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+# ═══════════════════════════════════════════════
+# MEDIA FILES (optional but useful)
+# ═══════════════════════════════════════════════
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# ═══════════════════════════════════════════════
+# EMAIL CONFIGURATION (OTP ready ✔️)
+# ═══════════════════════════════════════════════
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = 'singh2005any@gmail.com'        # 👉 apna Gmail
+EMAIL_HOST_PASSWORD = 'gyyylzjymwigzdic'   # 👉 App Password (NOT normal password)
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+# ═══════════════════════════════════════════════
+# OTP SETTINGS (ADDED ✔️)
+# ═══════════════════════════════════════════════
+OTP_EXPIRY_TIME = 300      # 5 minutes
+OTP_MAX_ATTEMPTS = 5
+
+
+# ═══════════════════════════════════════════════
+# SESSION SETTINGS
+# ═══════════════════════════════════════════════
+SESSION_COOKIE_AGE = 3600
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_HTTPONLY = True
+
+
+# ═══════════════════════════════════════════════
+# SECURITY HEADERS (IMPROVED ✔️)
+# ═══════════════════════════════════════════════
+X_FRAME_OPTIONS = 'DENY'
+SECURE_BROWSER_XSS_FILTER = True
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+
+# ═══════════════════════════════════════════════
+# DEFAULT AUTO FIELD
+# ═══════════════════════════════════════════════
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ═══════════════════════════════════════════════
+# MESSAGES FRAMEWORK
+# ═══════════════════════════════════════════════
+from django.contrib.messages import constants as messages
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'debug',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'error',
+}

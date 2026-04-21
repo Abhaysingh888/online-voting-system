@@ -21,34 +21,81 @@
 </nav>
 
 {% for message in messages %}
-  <div class="flash-msg {% if message.tags == 'error' %}error{% else %}success{% endif %}" style="display:none">{{ message }}</div>
+  <div class="flash-msg {% if message.tags == 'error' %}error{% else %}success{% endif %}" style="display:none">
+    {{ message }}
+  </div>
 {% endfor %}
 
 <div class="auth-page">
-  <div class="glass-card auth-card" style="max-width:480px">
+  <div class="glass-card auth-card" style="max-width:500px">
+
     <div class="auth-brand">
       <div class="auth-icon">✨</div>
       <h1 class="auth-title">Create Account</h1>
-      <p class="auth-sub">Join VoteSecure and make your voice heard</p>
+      <p class="auth-sub">Register with your Aadhar & Email OTP</p>
+    </div>
+
+    <!-- Steps indicator -->
+    <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;align-items:center;justify-content:center">
+      <div style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--gold);font-weight:700">
+        <div style="width:24px;height:24px;border-radius:50%;background:var(--gold);color:var(--navy);
+                    display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">1</div>
+        Fill Form
+      </div>
+      <div style="flex:1;height:1px;background:rgba(255,255,255,0.1)"></div>
+      <div style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--muted)">
+        <div style="width:24px;height:24px;border-radius:50%;border:1px solid var(--muted);
+                    display:flex;align-items:center;justify-content:center;font-size:.7rem">2</div>
+        Verify OTP
+      </div>
+      <div style="flex:1;height:1px;background:rgba(255,255,255,0.1)"></div>
+      <div style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--muted)">
+        <div style="width:24px;height:24px;border-radius:50%;border:1px solid var(--muted);
+                    display:flex;align-items:center;justify-content:center;font-size:.7rem">3</div>
+        Done
+      </div>
     </div>
 
     <form method="POST" action="{% url 'register' %}">
       {% csrf_token %}
 
       <div class="form-group">
-        <label class="form-label">Username</label>
+        <label class="form-label">Full Name (Username)</label>
         <div style="position:relative">
           <i class="fas fa-user input-icon"></i>
-          <input type="text" name="username" class="form-input" placeholder="Choose a username" required autofocus/>
+          <input type="text" name="username" class="form-input"
+                 placeholder="Enter your username" required autofocus/>
         </div>
-        <div class="tooltip-hint"><i class="fas fa-circle-info"></i> Only letters, numbers, and underscores</div>
       </div>
 
       <div class="form-group">
         <label class="form-label">Email Address</label>
         <div style="position:relative">
           <i class="fas fa-envelope input-icon"></i>
-          <input type="email" name="email" class="form-input" placeholder="your@email.com" required/>
+          <input type="email" name="email" class="form-input"
+                 placeholder="your@email.com" required/>
+        </div>
+        <div class="tooltip-hint">
+          <i class="fas fa-circle-info"></i> OTP will be sent to this email
+        </div>
+      </div>
+
+      <!-- AADHAR NUMBER -->
+      <div class="form-group">
+        <label class="form-label">
+          <i class="fas fa-id-card" style="color:var(--gold)"></i>
+          Aadhar Number
+        </label>
+        <div style="position:relative">
+          <i class="fas fa-fingerprint input-icon"></i>
+          <input type="text" name="aadhar_no" id="aadhar-input" class="form-input"
+                 placeholder="Enter 12-digit Aadhar number"
+                 maxlength="12" pattern="\d{12}"
+                 required autocomplete="off"/>
+        </div>
+        <div class="tooltip-hint" id="aadhar-hint">
+          <i class="fas fa-circle-info"></i>
+          <span id="aadhar-count">0</span>/12 digits entered
         </div>
       </div>
 
@@ -56,30 +103,40 @@
         <label class="form-label">Password</label>
         <div style="position:relative">
           <i class="fas fa-lock input-icon"></i>
-          <input type="password" name="password" id="password" class="form-input" placeholder="Create strong password" required/>
+          <input type="password" name="password" id="password" class="form-input"
+                 placeholder="Create strong password" required/>
           <button type="button" id="toggle-pwd"
-            style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted)">
+            style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);
+                   background:none;border:none;cursor:pointer;color:var(--muted)">
             <i class="fas fa-eye"></i>
           </button>
         </div>
-        <!-- Password Strength Bar -->
-        <div class="strength-bar" style="margin-top:8px">
-          <div class="strength-fill" id="strength-fill"></div>
+        <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+        <div class="strength-text" id="strength-text"></div>
+        <div class="tooltip-hint">
+          <i class="fas fa-circle-info"></i> Min 8 chars, uppercase, number & symbol
         </div>
-        <div class="strength-text" id="strength-text" style="color:var(--muted)"></div>
-        <div class="tooltip-hint"><i class="fas fa-circle-info"></i> Use 8+ chars, uppercase, numbers & symbols</div>
       </div>
 
       <div class="form-group">
         <label class="form-label">Confirm Password</label>
         <div style="position:relative">
           <i class="fas fa-shield-halved input-icon"></i>
-          <input type="password" name="confirm_password" id="confirm_password" class="form-input" placeholder="Repeat your password" required/>
+          <input type="password" name="confirm_password" id="confirm_password"
+                 class="form-input" placeholder="Repeat your password" required/>
         </div>
       </div>
 
+      <!-- Security notice -->
+      <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);
+                  border-radius:10px;padding:.8rem 1rem;margin-bottom:1.2rem;font-size:.8rem;
+                  color:var(--muted);display:flex;gap:.6rem;align-items:flex-start">
+        <i class="fas fa-shield-halved" style="color:var(--gold);margin-top:.1rem"></i>
+        <span>Your Aadhar number is encrypted and stored securely. It will only be used for voter verification.</span>
+      </div>
+
       <button type="submit" class="btn-primary">
-        <i class="fas fa-user-plus"></i> &nbsp;Create Account
+        <i class="fas fa-paper-plane"></i> &nbsp;Send OTP & Register
       </button>
     </form>
 
@@ -88,6 +145,7 @@
   </div>
 </div>
 
+<!-- CHATBOT -->
 <button id="chatbot-toggle">🤖</button>
 <div id="chatbot-box">
   <div class="chat-header">
@@ -101,8 +159,8 @@
   <div class="chat-messages" id="chat-messages"></div>
   <div class="chat-quick">
     <button class="quick-btn">Register help</button>
-    <button class="quick-btn">Password rules</button>
-    <button class="quick-btn">How to vote?</button>
+    <button class="quick-btn">Aadhar help</button>
+    <button class="quick-btn">OTP help</button>
   </div>
   <div class="chat-input-row">
     <input class="chat-input" id="chat-input" placeholder="Ask me anything..."/>
@@ -112,6 +170,23 @@
 
 <script src="{% static 'js/main.js' %}"></script>
 <script>
+  // Aadhar — only digits allowed + counter
+  const aadharInput = document.getElementById('aadhar-input');
+  const aadharCount = document.getElementById('aadhar-count');
+  const aadharHint  = document.getElementById('aadhar-hint');
+
+  aadharInput.addEventListener('input', () => {
+    aadharInput.value = aadharInput.value.replace(/\D/g, '').slice(0, 12);
+    const len = aadharInput.value.length;
+    aadharCount.textContent = len;
+    if (len === 12) {
+      aadharHint.style.color = '#27ae60';
+      aadharCount.textContent = '✓ 12';
+    } else {
+      aadharHint.style.color = '';
+    }
+  });
+
   // Show/hide password
   const toggleBtn = document.getElementById('toggle-pwd');
   const pwdField  = document.getElementById('password');

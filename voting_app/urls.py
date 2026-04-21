@@ -5,10 +5,11 @@ urlpatterns = [
     path('',               views.home_view,            name='home'),
     path('login/',         views.login_view,            name='login'),
     path('register/',      views.register_view,         name='register'),
+    path('verify_otp/', views.verify_otp_view, name='verify_otp'),
     path('logout/',        views.logout_view,           name='logout'),
     path('dashboard/',     views.dashboard_view,        name='dashboard'),
     path('vote/',          views.vote_view,             name='vote'),
     path('results/',       views.results_view,          name='results'),
     path('forgot/',        views.forgot_password_view,  name='forgot_password'),
-     path('about/', views.about, name='about'),
+    path('about/', views.about_view, name='about'),
 ]

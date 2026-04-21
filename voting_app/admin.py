@@ -1,13 +1,25 @@
 from django.contrib import admin
-from .models import Candidate, Vote, Election
+from .models import Candidate, Vote, Election, VoterProfile
+
+
+@admin.register(VoterProfile)
+class VoterProfileAdmin(admin.ModelAdmin):
+    list_display  = ('user', 'masked_aadhar', 'is_verified')
+    list_filter   = ('is_verified',)
+    search_fields = ('user__username', 'aadhar_no', 'user__email')
+    readonly_fields = ('aadhar_no', 'otp', 'otp_created')
+
+    def masked_aadhar(self, obj):
+        return obj.masked_aadhar()
+    masked_aadhar.short_description = 'Aadhar (Masked)'
 
 
 @admin.register(Candidate)
 class CandidateAdmin(admin.ModelAdmin):
-    list_display  = ('name', 'party', 'votes')
-    list_filter   = ('party',)
-    search_fields = ('name', 'party')
-    ordering      = ('-votes',)
+    list_display    = ('name', 'party', 'votes')
+    list_filter     = ('party',)
+    search_fields   = ('name', 'party')
+    ordering        = ('-votes',)
     readonly_fields = ('votes',)
 
 
@@ -22,12 +34,10 @@ class VoteAdmin(admin.ModelAdmin):
 
 @admin.register(Election)
 class ElectionAdmin(admin.ModelAdmin):
-    list_display  = ('title', 'start_time', 'end_time', 'is_active', 'status_label')
-    list_filter   = ('is_active',)
-    search_fields = ('title',)
+    list_display = ('title', 'start_time', 'end_time', 'is_active', 'status_label')
+    list_filter  = ('is_active',)
 
     def status_label(self, obj):
-        status = obj.status_label()
-        icons  = {'upcoming': '⏳ Upcoming', 'ongoing': '🟢 Ongoing', 'ended': '🔴 Ended'}
-        return icons.get(status, status)
+        s = obj.status_label()
+        return {'upcoming': '⏳ Upcoming', 'ongoing': '🟢 Ongoing', 'ended': '🔴 Ended'}.get(s, s)
     status_label.short_description = 'Status'

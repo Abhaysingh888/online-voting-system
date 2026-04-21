@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verify OTP — VoteSecure</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg:        #0a0a0f;
+            --surface:   #111118;
+            --border:    rgba(255,255,255,0.07);
+            --accent:    #5c6ef8;
+            --accent2:   #a78bfa;
+            --success:   #34d399;
+            --error:     #f87171;
+            --text:      #f0f0f8;
+            --muted:     #6b7280;
+            --glow:      rgba(92,110,248,0.35);
+        }
+
+        *, *::before, *::after {
+            margin: 0; padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ── Animated background ── */
+        .bg-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.18;
+            animation: drift 12s ease-in-out infinite alternate;
+        }
+
+        .orb-1 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, #5c6ef8, transparent);
+            top: -150px; left: -150px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, #a78bfa, transparent);
+            bottom: -100px; right: -100px;
+            animation-delay: -4s;
+        }
+
+        .orb-3 {
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, #34d399, transparent);
+            top: 50%; left: 60%;
+            opacity: 0.08;
+            animation-delay: -8s;
+        }
+
+        @keyframes drift {
+            from { transform: translate(0, 0) scale(1); }
+            to   { transform: translate(30px, 20px) scale(1.08); }
+        }
+
+        /* Grid dots */
+        .grid-dots {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-image:
+                radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+            background-size: 32px 32px;
+            pointer-events: none;
+        }
+
+        /* ── Card ── */
+        .card {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 440px;
+            margin: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 48px 40px 40px;
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.03),
+                0 40px 80px rgba(0,0,0,0.6),
+                0 0 60px var(--glow);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(32px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ── Icon badge ── */
+        .icon-badge {
+            width: 60px; height: 60px;
+            background: linear-gradient(135deg, rgba(92,110,248,0.2), rgba(167,139,250,0.15));
+            border: 1px solid rgba(92,110,248,0.3);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 28px;
+            font-size: 26px;
+            animation: pulse-border 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(92,110,248,0.3); }
+            50%       { box-shadow: 0 0 0 6px rgba(92,110,248,0); }
+        }
+
+        /* ── Typography ── */
+        .brand {
+            font-family: 'Syne', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .email-highlight {
+            color: var(--accent2);
+            font-weight: 500;
+        }
+
+        /* ── Divider ── */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 28px 0;
+        }
+
+        /* ── OTP Inputs ── */
+        .otp-label {
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 14px;
+        }
+
+        .otp-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+
+        .otp-box {
+            aspect-ratio: 1;
+            text-align: center;
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            background: rgba(255,255,255,0.04);
+            border: 1.5px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.2s ease;
+            caret-color: var(--accent);
+        }
+
+        .otp-box:focus {
+            border-color: var(--accent);
+            background: rgba(92,110,248,0.08);
+            box-shadow: 0 0 0 3px rgba(92,110,248,0.2);
+            transform: translateY(-2px);
+        }
+
+        .otp-box.filled {
+            border-color: rgba(92,110,248,0.5);
+            background: rgba(92,110,248,0.1);
+            color: var(--accent2);
+        }
+
+        .otp-box.error-state {
+            border-color: var(--error);
+            background: rgba(248,113,113,0.08);
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%       { transform: translateX(-5px); }
+            40%       { transform: translateX(5px); }
+            60%       { transform: translateX(-3px); }
+            80%       { transform: translateX(3px); }
+        }
+
+        /* ── Timer ── */
+        .timer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .timer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .timer-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: blink 1.2s ease-in-out infinite;
+        }
+
+        .timer-dot.expired { background: var(--error); animation: none; }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.3; }
+        }
+
+        #timer-count {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            color: var(--text);
+            min-width: 38px;
+        }
+
+        #timer-count.warning { color: #fbbf24; }
+        #timer-count.expired { color: var(--error); }
+
+        /* ── Submit Button ── */
+        .btn-verify {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            font-family: 'Syne', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-verify::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #fff 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .btn-verify:hover::before { opacity: 0.07; }
+
+        .btn-verify:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(92,110,248,0.45);
+        }
+
+        .btn-verify:active { transform: translateY(0); }
+
+        .btn-verify:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-verify.loading .btn-text { opacity: 0; }
+        .btn-verify.loading .btn-spinner { display: block; }
+
+        .btn-spinner {
+            display: none;
+            position: absolute;
+            inset: 0;
+            margin: auto;
+            width: 20px; height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Messages ── */
+        .msg {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            animation: fadeMsg 0.3s ease;
+        }
+
+        @keyframes fadeMsg {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg.show { display: flex; }
+        .msg.success { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.25); color: var(--success); }
+        .msg.error   { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25); color: var(--error); }
+
+        /* Django messages */
+        .django-msg {
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 18px;
+        }
+        .django-msg.success { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.25); color: var(--success); }
+        .django-msg.error   { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25); color: var(--error); }
+
+        /* ── Footer ── */
+        .footer-row {
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        .resend-text {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .resend-link {
+            color: var(--accent2);
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .resend-link:hover { color: var(--text); }
+        .resend-link.disabled { color: var(--muted); pointer-events: none; }
+
+        .purpose-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(167,139,250,0.1);
+            border: 1px solid rgba(167,139,250,0.2);
+            color: var(--accent2);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-layer">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
+<div class="grid-dots"></div>
+
+<!-- Card -->
+<div class="card">
+
+    <div class="brand">VoteSecure</div>
+
+    <div class="icon-badge">🔐</div>
+
+    <!-- Purpose badge (Django template) -->
+    {% if purpose == 'login' %}
+    <div class="purpose-badge">⚡ Login Verification</div>
+    {% else %}
+    <div class="purpose-badge">✦ Registration</div>
+    {% endif %}
+
+    <h1>Check your inbox</h1>
+    <p class="subtitle">
+        We sent a 6-digit OTP to
+        <span class="email-highlight">{{ email }}</span>.
+        Enter it below to continue.
+    </p>
+
+    <div class="divider"></div>
+
+    <!-- Django messages -->
+    {% for message in messages %}
+    <div class="django-msg {% if message.tags %}{{ message.tags }}{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+
+    <!-- JS feedback -->
+    <div class="msg error" id="js-error">
+        <span>⚠</span> <span id="js-error-text">Invalid OTP. Please try again.</span>
+    </div>
+    <div class="msg success" id="js-success">
+        <span>✓</span> <span>Verifying your OTP…</span>
+    </div>
+
+    <form method="POST" id="otp-form">
+        {% csrf_token %}
+        <input type="hidden" name="otp" id="final-otp">
+
+        <div class="otp-label">Enter 6-digit OTP</div>
+        <div class="otp-grid">
+            <input class="otp-box" type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code">
+            <input class="otp-box" type="text" inputmode="numeric" maxlength="1">
+            <input class="otp-box" type="text" inputmode="numeric" maxlength="1">
+            <input class="otp-box" type="text" inputmode="numeric" maxlength="1">
+            <input class="otp-box" type="text" inputmode="numeric" maxlength="1">
+            <input class="otp-box" type="text" inputmode="numeric" maxlength="1">
+        </div>
+
+        <!-- Timer -->
+        <div class="timer-row">
+            <div class="timer">
+                <div class="timer-dot" id="timer-dot"></div>
+                <span>Expires in</span>
+                <span id="timer-count">10:00</span>
+            </div>
+            <span style="font-size:12px; color: var(--muted);">6 digits</span>
+        </div>
+
+        <button type="submit" class="btn-verify" id="submit-btn">
+            <span class="btn-text">Verify OTP →</span>
+            <div class="btn-spinner"></div>
+        </button>
+    </form>
+
+    <div class="footer-row">
+        <p class="resend-text">
+            Didn't receive it?
+            <a href="{% url 'resend_otp' %}" class="resend-link" id="resend-link">Resend OTP</a>
+        </p>
+    </div>
+
+</div>
+
+<script>
+    const boxes   = document.querySelectorAll('.otp-box');
+    const form    = document.getElementById('otp-form');
+    const finalOtp = document.getElementById('final-otp');
+    const submitBtn = document.getElementById('submit-btn');
+    const timerEl  = document.getElementById('timer-count');
+    const timerDot = document.getElementById('timer-dot');
+    const resendLink = document.getElementById('resend-link');
+
+    // ── Auto-focus & navigation ──
+    boxes.forEach((box, i) => {
+        box.addEventListener('input', e => {
+            const val = e.target.value.replace(/\D/g, '');
+            e.target.value = val;
+            if (val) {
+                box.classList.add('filled');
+                if (i < boxes.length - 1) boxes[i + 1].focus();
+            } else {
+                box.classList.remove('filled');
+            }
+            updateSubmit();
+        });
+
+        box.addEventListener('keydown', e => {
+            if (e.key === 'Backspace' && !box.value && i > 0) {
+                boxes[i - 1].focus();
+                boxes[i - 1].value = '';
+                boxes[i - 1].classList.remove('filled');
+                updateSubmit();
+            }
+            if (e.key === 'ArrowLeft' && i > 0)  boxes[i - 1].focus();
+            if (e.key === 'ArrowRight' && i < boxes.length - 1) boxes[i + 1].focus();
+        });
+
+        // Handle paste
+        box.addEventListener('paste', e => {
+            e.preventDefault();
+            const pasted = (e.clipboardData || window.clipboardData)
+                            .getData('text').replace(/\D/g, '').slice(0, 6);
+            pasted.split('').forEach((ch, idx) => {
+                if (boxes[idx]) {
+                    boxes[idx].value = ch;
+                    boxes[idx].classList.add('filled');
+                }
+            });
+            const nextEmpty = [...boxes].findIndex(b => !b.value);
+            (nextEmpty !== -1 ? boxes[nextEmpty] : boxes[5]).focus();
+            updateSubmit();
+        });
+    });
+
+    function updateSubmit() {
+        const otp = [...boxes].map(b => b.value).join('');
+        submitBtn.disabled = otp.length < 6;
+    }
+
+    // ── Submit ──
+    form.addEventListener('submit', e => {
+        const otp = [...boxes].map(b => b.value).join('');
+        if (otp.length < 6) {
+            e.preventDefault();
+            showError('Please enter all 6 digits.');
+            shakeBoxes();
+            return;
+        }
+        finalOtp.value = otp;
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+        document.getElementById('js-success').classList.add('show');
+    });
+
+    function showError(msg) {
+        document.getElementById('js-error-text').textContent = msg;
+        document.getElementById('js-error').classList.add('show');
+        setTimeout(() => document.getElementById('js-error').classList.remove('show'), 3500);
+    }
+
+    function shakeBoxes() {
+        boxes.forEach(b => {
+            b.classList.add('error-state');
+            setTimeout(() => b.classList.remove('error-state'), 500);
+        });
+    }
+
+    // ── Countdown Timer (10 min) ──
+    let seconds = 600;
+    updateSubmit(); // init disabled state
+
+    const interval = setInterval(() => {
+        seconds--;
+        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const s = String(seconds % 60).padStart(2, '0');
+        timerEl.textContent = `${m}:${s}`;
+
+        if (seconds <= 60) timerEl.classList.add('warning');
+        if (seconds <= 0) {
+            clearInterval(interval);
+            timerEl.textContent = 'Expired';
+            timerEl.classList.remove('warning');
+            timerEl.classList.add('expired');
+            timerDot.classList.add('expired');
+            submitBtn.disabled = true;
+            boxes.forEach(b => b.disabled = true);
+            showError('OTP expired! Please resend a new one.');
+        }
+    }, 1000);
+
+    // Focus first box on load
+    boxes[0].focus();
+</script>
+
+</body>
+</html>

@@ -21,42 +21,72 @@
 </nav>
 
 {% for message in messages %}
-  <div class="flash-msg {% if message.tags == 'error' %}error{% else %}success{% endif %}" style="display:none">{{ message }}</div>
+  <div class="flash-msg {% if message.tags == 'error' %}error{% else %}success{% endif %}" style="display:none">
+    {{ message }}
+  </div>
 {% endfor %}
 
 <div class="auth-page">
   <div class="glass-card auth-card">
+
     <div class="auth-brand">
       <div class="auth-icon">🗳️</div>
       <h1 class="auth-title">Welcome Back</h1>
-      <p class="auth-sub">Login to cast your vote securely</p>
+      <p class="auth-sub">Login with password + Email OTP verification</p>
+    </div>
+
+    <!-- 2-Step indicator -->
+    <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;align-items:center;justify-content:center">
+      <div style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--gold);font-weight:700">
+        <div style="width:24px;height:24px;border-radius:50%;background:var(--gold);color:var(--navy);
+                    display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">1</div>
+        Password
+      </div>
+      <div style="flex:1;height:1px;background:rgba(255,255,255,0.1)"></div>
+      <div style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--muted)">
+        <div style="width:24px;height:24px;border-radius:50%;border:1px solid var(--muted);
+                    display:flex;align-items:center;justify-content:center;font-size:.7rem">2</div>
+        Email OTP
+      </div>
     </div>
 
     <form method="POST" action="{% url 'login' %}">
       {% csrf_token %}
+
       <div class="form-group">
         <label class="form-label">Username</label>
         <div style="position:relative">
           <i class="fas fa-user input-icon"></i>
-          <input type="text" name="username" class="form-input" placeholder="Enter username" required autofocus/>
+          <input type="text" name="username" class="form-input"
+                 placeholder="Enter your username" required autofocus/>
         </div>
       </div>
+
       <div class="form-group">
-        <label class="form-label" style="display:flex;justify-content:space-between">
+        <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
           Password
-          <a href="{% url 'forgot_password' %}" class="forgot-link" style="float:none;margin-top:0">Forgot?</a>
+          <a href="{% url 'forgot_password' %}" class="forgot-link" style="float:none;margin:0">
+            Forgot?
+          </a>
         </label>
         <div style="position:relative">
           <i class="fas fa-lock input-icon"></i>
-          <input type="password" name="password" id="pwd-field" class="form-input" placeholder="Enter password" required/>
+          <input type="password" name="password" id="pwd-field" class="form-input"
+                 placeholder="Enter your password" required/>
           <button type="button" id="toggle-pwd"
-            style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted)">
+            style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);
+                   background:none;border:none;cursor:pointer;color:var(--muted)">
             <i class="fas fa-eye"></i>
           </button>
         </div>
-        <div class="tooltip-hint"><i class="fas fa-circle-info"></i> Password is case-sensitive</div>
+        <div class="tooltip-hint">
+          <i class="fas fa-circle-info"></i> After password, OTP will be sent to your email
+        </div>
       </div>
-      <button type="submit" class="btn-primary"><i class="fas fa-sign-in-alt"></i> &nbsp;Login to VoteSecure</button>
+
+      <button type="submit" class="btn-primary">
+        <i class="fas fa-arrow-right"></i> &nbsp;Continue to OTP Verification
+      </button>
     </form>
 
     <div class="divider-text" style="margin-top:1.5rem">New here?</div>
@@ -64,6 +94,7 @@
   </div>
 </div>
 
+<!-- CHATBOT -->
 <button id="chatbot-toggle">🤖</button>
 <div id="chatbot-box">
   <div class="chat-header">
@@ -77,8 +108,8 @@
   <div class="chat-messages" id="chat-messages"></div>
   <div class="chat-quick">
     <button class="quick-btn">Login help</button>
+    <button class="quick-btn">OTP help</button>
     <button class="quick-btn">Forgot password</button>
-    <button class="quick-btn">How to vote?</button>
   </div>
   <div class="chat-input-row">
     <input class="chat-input" id="chat-input" placeholder="Ask me anything..."/>

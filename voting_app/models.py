@@ -14,6 +14,27 @@ class Candidate(models.Model):
 
     class Meta:
         ordering = ['-votes']
+        
+class VoterProfile(models.Model):
+    user        = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    aadhar_no   = models.CharField(max_length=12, unique=True)  # 12 digit unique
+    is_verified = models.BooleanField(default=False)             # Email OTP verified?
+    otp         = models.CharField(max_length=6, blank=True)
+    otp_created = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username} | Aadhar: {self.aadhar_no} | Verified: {self.is_verified}"
+
+    def is_otp_valid(self):
+        """OTP 10 minute tak valid rahega"""
+        if not self.otp_created:
+            return False
+        diff = timezone.now() - self.otp_created
+        return diff.total_seconds() < 600  # 600 seconds = 10 min
+
+    def masked_aadhar(self):
+        """XXXX-XXXX-1234 format"""
+        return f"XXXX-XXXX-{self.aadhar_no[-4:]}"
 
 
 class Vote(models.Model):
