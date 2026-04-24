@@ -5,236 +5,489 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Verify OTP — VoteSecure</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
 <style>
 :root {
-    --bg:#06070d;
-    --card:#111320;
-    --accent:#4f6ef7;
-    --violet:#9b7ff7;
-    --text:#eef0f8;
-    --sub:#8890aa;
-    --border:rgba(255,255,255,0.08);
+    --bg: #060812;
+    --card: #0e1124;
+    --accent: #5b7cfa;
+    --violet: #a78bfa;
+    --green: #34d399;
+    --text: #f0f2fc;
+    --sub: #7880a0;
+    --border: rgba(255,255,255,0.07);
+    --glow: rgba(91,124,250,0.25);
 }
 
-/* reset */
-*{margin:0;padding:0;box-sizing:border-box}
+* { margin:0; padding:0; box-sizing:border-box; }
 
-/* layout */
-body{
-    min-height:100dvh;
-    font-family:'Outfit',sans-serif;
-    background: radial-gradient(circle at top,#0d1020,#06070d);
-    color:var(--text);
-
-    display:grid;
-    place-items:center;
-
-    padding:20px 12px;
+html, body {
+    height: 100%;
+    width: 100%;
 }
 
-/* mobile top align */
-@media(max-width:480px){
-    body{
-        place-items:start;
-    }
+body {
+    min-height: 100dvh;
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    overflow-x: hidden;
+    position: relative;
 }
 
-/* card */
-.card{
-    width:100%;
-    max-width:420px;
-
-    background:rgba(17,19,32,0.9);
-    backdrop-filter: blur(12px);
-
-    border:1px solid var(--border);
-    border-radius:20px;
-
-    padding:28px 22px;
-
-    box-shadow:0 20px 60px rgba(0,0,0,0.6);
-    animation:fade .5s ease;
+/* Ambient background blobs */
+.blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.18;
+    pointer-events: none;
+    z-index: 0;
+}
+.blob-1 {
+    width: 400px; height: 400px;
+    background: #5b7cfa;
+    top: -100px; left: -80px;
+    animation: drift1 10s ease-in-out infinite alternate;
+}
+.blob-2 {
+    width: 300px; height: 300px;
+    background: #a78bfa;
+    bottom: -60px; right: -60px;
+    animation: drift2 12s ease-in-out infinite alternate;
+}
+.blob-3 {
+    width: 200px; height: 200px;
+    background: #34d399;
+    bottom: 30%; left: 10%;
+    opacity: 0.08;
+    animation: drift1 8s ease-in-out infinite alternate;
 }
 
-@keyframes fade{
-    from{opacity:0;transform:translateY(20px)}
-    to{opacity:1}
+@keyframes drift1 { to { transform: translate(30px, 20px); } }
+@keyframes drift2 { to { transform: translate(-20px, -30px); } }
+
+/* Card */
+.card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 400px;
+    background: linear-gradient(145deg, rgba(20,24,48,0.95), rgba(14,17,36,0.98));
+    border: 1px solid rgba(91,124,250,0.18);
+    border-radius: 24px;
+    padding: 32px 28px 28px;
+    box-shadow: 
+        0 30px 80px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(255,255,255,0.04) inset,
+        0 1px 0 rgba(255,255,255,0.08) inset;
+    animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
 }
 
-/* header */
-.top{
-    display:flex;
-    justify-content:space-between;
-    margin-bottom:18px;
+@keyframes slideUp {
+    from { opacity:0; transform: translateY(28px) scale(0.97); }
+    to   { opacity:1; transform: translateY(0) scale(1); }
 }
 
-.chip{
-    font-size:11px;
-    padding:4px 10px;
-    border-radius:20px;
-    background:rgba(79,110,247,.15);
-    color:var(--accent);
+/* Header row */
+.header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 26px;
 }
 
-/* title */
-h1{
-    font-size:24px;
-    font-weight:800;
-    margin-bottom:6px;
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sub);
+    letter-spacing: 0.04em;
 }
 
-.sub{
-    font-size:13px;
-    color:var(--sub);
-    margin-bottom:18px;
+.brand-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--accent), var(--violet));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
 }
 
-/* otp */
-.otp-grid{
-    display:grid;
-    grid-template-columns:repeat(6,1fr);
-    gap:8px;
-    margin-bottom:18px;
+.step-badge {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(91,124,250,0.1);
+    border: 1px solid rgba(91,124,250,0.2);
+    color: var(--accent);
+    letter-spacing: 0.05em;
 }
 
-.otp-box{
-    aspect-ratio:1;
-    text-align:center;
-    font-size:20px;
-    font-weight:700;
-
-    border-radius:10px;
-    border:1.5px solid var(--border);
-
-    background:#0d0f1a;
-    color:white;
-
-    outline:none;
-    transition:.2s;
+/* Shield icon area */
+.icon-wrap {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-.otp-box:focus{
-    border-color:var(--accent);
-    box-shadow:0 0 0 2px rgba(79,110,247,.3);
+.shield {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px; height: 64px;
+    border-radius: 20px;
+    background: linear-gradient(145deg, rgba(91,124,250,0.15), rgba(167,139,250,0.1));
+    border: 1px solid rgba(91,124,250,0.2);
+    font-size: 28px;
+    box-shadow: 0 8px 24px rgba(91,124,250,0.2);
+    animation: pulse 3s ease-in-out infinite;
 }
 
-.otp-box.filled{
-    border-color:var(--violet);
-    color:var(--violet);
+@keyframes pulse {
+    0%,100% { box-shadow: 0 8px 24px rgba(91,124,250,0.2); }
+    50% { box-shadow: 0 8px 32px rgba(91,124,250,0.4); }
 }
 
-/* button */
-button{
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:10px;
-
-    background:linear-gradient(135deg,var(--accent),var(--violet));
-    color:white;
-
-    font-weight:700;
-    cursor:pointer;
-    transition:.2s;
+/* Title */
+h1 {
+    font-size: 22px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+    background: linear-gradient(135deg, #fff 40%, var(--violet));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-button:hover{
-    transform:translateY(-2px);
+.sub-text {
+    font-size: 13px;
+    color: var(--sub);
+    text-align: center;
+    margin-bottom: 28px;
+    line-height: 1.5;
 }
 
-button:disabled{
-    opacity:.4;
-    cursor:not-allowed;
+.sub-text b {
+    color: var(--violet);
+    font-weight: 600;
 }
 
-/* footer */
-.footer{
-    text-align:center;
-    font-size:13px;
-    margin-top:14px;
-    color:var(--sub);
+/* Divider */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.divider-line { flex:1; height:1px; background:var(--border); }
+.divider-text { font-size:11px; color:var(--sub); letter-spacing:0.08em; white-space:nowrap; }
+
+/* OTP Grid */
+.otp-grid {
+    
+    
+    gap: 8px;
+    margin-bottom: 24px;
 }
 
-.footer a{
-    color:var(--violet);
-    text-decoration:none;
-    font-weight:600;
+.otp-box {
+    width: 42px;
+    height: 48px;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+
+    border-radius: 10px;
+    border: 1.5px solid rgba(255,255,255,0.08);
+    background: rgba(6,8,18,0.8);
+    color: white;
+    outline: none;
+    transition: all 0.2s ease;
+    -webkit-appearance: none;
+    caret-color: var(--accent);
+}
+
+.otp-box:focus {
+    border-color: var(--accent);
+    background: rgba(91,124,250,0.06);
+    box-shadow: 0 0 0 3px rgba(91,124,250,0.15), 0 4px 12px rgba(0,0,0,0.3);
+    transform: translateY(-2px);
+}
+
+.otp-box.filled {
+    border-color: rgba(167,139,250,0.5);
+    color: var(--violet);
+    background: rgba(167,139,250,0.06);
+}
+
+.otp-box.success {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(52,211,153,0.06);
+    animation: pop 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes pop {
+    0% { transform: scale(0.9); }
+    100% { transform: scale(1); }
+}
+
+/* Verify Button */
+.btn-verify {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--violet) 100%);
+    color: white;
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    letter-spacing: 0.02em;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(91,124,250,0.35);
+}
+
+.btn-verify::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    transition: left 0.4s ease;
+}
+
+.btn-verify:hover:not(:disabled)::before {
+    left: 100%;
+}
+
+.btn-verify:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(91,124,250,0.5);
+}
+
+.btn-verify:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-verify:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Timer / Footer */
+.footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 13px;
+    margin-top: 18px;
+    color: var(--sub);
+}
+
+.footer a {
+    color: var(--violet);
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s;
+}
+
+.footer a:hover { opacity: 0.8; }
+
+.timer-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    background: rgba(91,124,250,0.1);
+    border: 1px solid rgba(91,124,250,0.2);
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 4px;
+}
+
+/* Security note */
+.security-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 16px;
+    font-size: 11px;
+    color: rgba(120,128,160,0.7);
+    letter-spacing: 0.02em;
+}
+
+/* Responsive */
+@media (max-width: 420px) {
+    .card { padding: 24px 16px 22px; }
+    h1 { font-size: 20px; }
+    .otp-grid { gap: 6px; }
+    .otp-box { width: 36px; height: 42px; font-size: 16px; }
 }
 </style>
 </head>
 
 <body>
 
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
 <div class="card">
 
-<div class="top">
-    <div class="chip">🔐 VoteSecure</div>
-    <div class="chip">OTP</div>
-</div>
+    <!-- Header -->
+    <div class="header-row">
+        <div class="brand">
+            <div class="brand-icon">🗳️</div>
+            VoteSecure
+        </div>
+        <div class="step-badge">STEP 2/3</div>
+    </div>
 
-<h1>Verify OTP</h1>
-<p class="sub">Enter 6-digit code sent to <b>{{ email }}</b></p>
+    <!-- Shield icon -->
+    <div class="icon-wrap">
+        <div class="shield">🔐</div>
+    </div>
 
-<form method="POST" id="form">
-{% csrf_token %}
-<input type="hidden" name="otp" id="finalOtp">
+    <!-- Title -->
+    <h1>Verify Your Identity</h1>
+    <p class="sub-text">
+        6-digit code sent to<br>
+        <b>{{ email }}</b>
+    </p>
 
-<div class="otp-grid">
-    <input class="otp-box" maxlength="1">
-    <input class="otp-box" maxlength="1">
-    <input class="otp-box" maxlength="1">
-    <input class="otp-box" maxlength="1">
-    <input class="otp-box" maxlength="1">
-    <input class="otp-box" maxlength="1">
-</div>
+    <!-- Divider -->
+    <div class="divider">
+        <div class="divider-line"></div>
+        <div class="divider-text">ENTER OTP</div>
+        <div class="divider-line"></div>
+    </div>
 
-<button id="btn" disabled>Verify OTP</button>
-</form>
+    <!-- Form -->
+    <form method="POST" id="form">
+        {% csrf_token %}
+        <input type="hidden" name="otp" id="finalOtp">
 
-<div class="footer">
-    Didn't get code? <a href="{% url 'resend_otp' %}">Resend</a>
-</div>
+        <div class="otp-grid" id="otpGrid">
+            <input class="otp-box" maxlength="1" inputmode="numeric" autocomplete="one-time-code">
+            <input class="otp-box" maxlength="1" inputmode="numeric">
+            <input class="otp-box" maxlength="1" inputmode="numeric">
+            <input class="otp-box" maxlength="1" inputmode="numeric">
+            <input class="otp-box" maxlength="1" inputmode="numeric">
+            <input class="otp-box" maxlength="1" inputmode="numeric">
+        </div>
+
+        <button class="btn-verify" id="btn" type="submit" disabled>
+            ✦ &nbsp;Verify &amp; Continue
+        </button>
+    </form>
+
+    <!-- Footer -->
+    <div class="footer">
+        Didn't receive code?
+        <a href="{% url 'resend_otp' %}" id="resendLink">Resend</a>
+        <span class="timer-badge" id="timerBadge">0:30</span>
+    </div>
+
+    <!-- Security note -->
+    <div class="security-note">
+        🔒 &nbsp;256-bit encrypted &nbsp;·&nbsp; Do not share this code
+    </div>
 
 </div>
 
 <script>
-const boxes=document.querySelectorAll(".otp-box");
-const btn=document.getElementById("btn");
-const final=document.getElementById("finalOtp");
+const boxes = document.querySelectorAll(".otp-box");
+const btn = document.getElementById("btn");
+const final = document.getElementById("finalOtp");
+const resendLink = document.getElementById("resendLink");
+const timerBadge = document.getElementById("timerBadge");
 
-boxes.forEach((box,i)=>{
-    box.addEventListener("input",e=>{
-        let val=e.target.value.replace(/\D/g,'');
-        box.value=val;
-
-        if(val && i<5) boxes[i+1].focus();
-
+// OTP Input Logic
+boxes.forEach((box, i) => {
+    box.addEventListener("input", e => {
+        let val = e.target.value.replace(/\D/g, '');
+        box.value = val;
+        if (val) {
+            box.classList.add('filled');
+            if (i < 5) boxes[i + 1].focus();
+        } else {
+            box.classList.remove('filled');
+        }
         update();
     });
 
-    box.addEventListener("keydown",e=>{
-        if(e.key==="Backspace" && !box.value && i>0){
-            boxes[i-1].focus();
+    box.addEventListener("keydown", e => {
+        if (e.key === "Backspace" && !box.value && i > 0) {
+            boxes[i - 1].value = '';
+            boxes[i - 1].classList.remove('filled');
+            boxes[i - 1].focus();
+            update();
         }
     });
 
-    box.addEventListener("paste",e=>{
+    box.addEventListener("paste", e => {
         e.preventDefault();
-        let data=e.clipboardData.getData("text").slice(0,6);
-        data.split('').forEach((d,i)=>{
-            if(boxes[i]) boxes[i].value=d;
+        let data = e.clipboardData.getData("text").replace(/\D/g,'').slice(0, 6);
+        data.split('').forEach((d, j) => {
+            if (boxes[j]) {
+                boxes[j].value = d;
+                boxes[j].classList.add('filled');
+            }
         });
+        if (data.length < 6) boxes[data.length]?.focus();
+        else boxes[5].focus();
         update();
+    });
+
+    box.addEventListener("focus", () => {
+        box.select();
     });
 });
 
-function update(){
-    let otp=[...boxes].map(b=>b.value).join('');
-    btn.disabled=otp.length<6;
-    final.value=otp;
+function update() {
+    let otp = [...boxes].map(b => b.value).join('');
+    btn.disabled = otp.length < 6;
+    final.value = otp;
+
+    if (otp.length === 6) {
+        boxes.forEach(b => b.classList.add('success'));
+    } else {
+        boxes.forEach(b => b.classList.remove('success'));
+    }
 }
+
+// Resend Timer
+let seconds = 30;
+resendLink.style.pointerEvents = 'none';
+resendLink.style.opacity = '0.4';
+
+const interval = setInterval(() => {
+    seconds--;
+    timerBadge.textContent = `0:${seconds.toString().padStart(2,'0')}`;
+    if (seconds <= 0) {
+        clearInterval(interval);
+        timerBadge.style.display = 'none';
+        resendLink.style.pointerEvents = 'auto';
+        resendLink.style.opacity = '1';
+    }
+}, 1000);
 
 boxes[0].focus();
 </script>
