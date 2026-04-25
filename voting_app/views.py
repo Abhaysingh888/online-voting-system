@@ -349,6 +349,7 @@ def forgot_password_view(request):
 
 
 # ================= DASHBOARD =================
+# ================= DASHBOARD =================
 @login_required
 def dashboard_view(request):
     try:
@@ -356,17 +357,28 @@ def dashboard_view(request):
     except VoterProfile.DoesNotExist:
         return redirect('logout')
 
-    active_elections = Election.objects.filter(is_active=True).order_by('end_time')
-    votes_cast = Vote.objects.filter(user=request.user).count()
+    election    = Election.objects.filter(is_active=True).first()
+    candidates  = Candidate.objects.all()
+    total_votes = Vote.objects.count()
+    user_voted  = Vote.objects.filter(user=request.user).exists()
+    user_vote   = Vote.objects.filter(user=request.user).select_related('candidate').first()
+
+    # Timer ke liye seconds calculate karo
+    time_seconds = 0
+    if election and election.is_ongoing():
+        time_seconds = election.time_remaining_seconds()
 
     context = {
-        'profile': profile,
-        'active_elections': active_elections,
-        'total_elections': active_elections.count(),
-        'votes_cast': votes_cast,
+        'profile':      profile,
+        'election':     election,
+        'candidates':   candidates,
+        'total_votes':  total_votes,
+        'user_voted':   user_voted,
+        'user_vote':    user_vote,
+        'can_vote':     election and election.is_ongoing() and not user_voted,
+        'time_seconds': time_seconds,
     }
     return render(request, 'dashboard.html', context)
-
 
 # ================= VOTE =================
 @login_required
