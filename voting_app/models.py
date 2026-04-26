@@ -75,6 +75,9 @@ class VoterProfile(models.Model):
         otp_time = self.otp_created
 
       return (now - otp_time).total_seconds() < 600
+      
+      def masked_aadhar(self):
+       return f"XXXX-XXXX-{self.aadhar_no[-4:]}"
     
         
     

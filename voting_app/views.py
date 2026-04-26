@@ -95,7 +95,6 @@ def register_view(request):
         password = request.POST.get('password', '')
         confirm = request.POST.get('confirm_password', '')
 
-        # Basic validation
         if not all([username, email, aadhar, password, confirm]):
             messages.error(request, 'All fields are required!')
             return render(request, 'registration.html')
@@ -108,7 +107,6 @@ def register_view(request):
             messages.error(request, 'Aadhar number must be 12 digits!')
             return render(request, 'registration.html')
 
-        # Clean old incomplete registrations for same email
         existing_user = User.objects.filter(email=email).first()
         if existing_user:
             try:
@@ -130,7 +128,6 @@ def register_view(request):
             messages.error(request, 'Aadhar number already registered!')
             return render(request, 'registration.html')
 
-        # Create inactive user
         user = User.objects.create_user(username=username, email=email, password=password)
         user.is_active = False
         user.save()
@@ -178,18 +175,15 @@ def verify_otp_view(request):
         messages.error(request, 'Session invalid. Please register again.')
         return redirect('register')
 
-    # ✅ GET request safe (NO OTP validation here)
     if request.method == 'GET':
         return render(request, 'verify_otp.html', {'email': email})
 
-    # ================= POST =================
     entered_otp = request.POST.get('otp', '').strip()
 
     if not entered_otp:
         messages.error(request, 'Please enter OTP.')
         return render(request, 'verify_otp.html', {'email': email})
 
-    # ✅ SAFE OTP VALIDATION
     try:
         if not profile.is_otp_valid():
             messages.error(request, 'OTP expired! Please start over.')
@@ -199,7 +193,6 @@ def verify_otp_view(request):
         messages.error(request, 'OTP error. Please try again.')
         return redirect('login')
 
-    # ✅ HASH CHECK
     try:
         entered_hash = hash_otp(entered_otp, email)
     except Exception as e:
@@ -211,7 +204,6 @@ def verify_otp_view(request):
         messages.error(request, 'Invalid OTP! Please try again.')
         return render(request, 'verify_otp.html', {'email': email})
 
-    # ✅ SUCCESS
     if purpose == 'register':
         user.is_active = True
         user.save()
@@ -230,6 +222,8 @@ def verify_otp_view(request):
 
     messages.success(request, 'Account verified! You can now log in.')
     return redirect('login')
+
+
 # ================= LOGIN =================
 @never_cache
 @require_http_methods(["GET", "POST"])
@@ -283,7 +277,8 @@ def login_view(request):
 
     return render(request, 'login.html')
 
-# RESEND OTP
+
+# ================= RESEND OTP =================
 def resend_otp_view(request):
     email = request.session.get('verify_email')
     purpose = request.session.get('verify_purpose', 'register')
@@ -337,7 +332,6 @@ def forgot_password_view(request):
             return redirect('verify_otp')
 
         except (User.DoesNotExist, VoterProfile.DoesNotExist):
-            # Don't reveal if email exists
             messages.success(request, 'If this email is registered, an OTP has been sent.')
             return render(request, 'forgot_password.html')
 
@@ -348,7 +342,6 @@ def forgot_password_view(request):
     return render(request, 'forgot_password.html')
 
 
-# ================= DASHBOARD =================
 # ================= DASHBOARD =================
 @login_required
 def dashboard_view(request):
@@ -363,7 +356,6 @@ def dashboard_view(request):
     user_voted  = Vote.objects.filter(user=request.user).exists()
     user_vote   = Vote.objects.filter(user=request.user).select_related('candidate').first()
 
-    # Timer ke liye seconds calculate karo
     time_seconds = 0
     if election and election.is_ongoing():
         time_seconds = election.time_remaining_seconds()
@@ -380,6 +372,7 @@ def dashboard_view(request):
     }
     return render(request, 'dashboard.html', context)
 
+
 # ================= VOTE =================
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -390,7 +383,6 @@ def vote_view(request):
         messages.error(request, 'Voter profile not found.')
         return redirect('dashboard')
 
-    # Get currently ongoing election
     election = Election.objects.filter(is_active=True).order_by('start_time').first()
 
     if not election:
@@ -406,7 +398,6 @@ def vote_view(request):
 
     candidates = Candidate.objects.all()
 
-    # Check if user already voted for ANY candidate (they've used their vote)
     already_voted = Vote.objects.filter(user=request.user).exists()
     if already_voted:
         messages.warning(request, 'You have already cast your vote.')
@@ -421,14 +412,11 @@ def vote_view(request):
 
         candidate = get_object_or_404(Candidate, id=candidate_id)
 
-        # Race condition guard
         if Vote.objects.filter(user=request.user).exists():
             messages.error(request, 'You have already voted!')
             return redirect('results')
 
         Vote.objects.create(user=request.user, candidate=candidate)
-
-        # Increment candidate's vote count
         Candidate.objects.filter(id=candidate.id).update(votes=models.F('votes') + 1)
 
         logger.info(f"Vote cast by {request.user.username} for candidate {candidate.name}")
@@ -441,33 +429,35 @@ def vote_view(request):
 # ================= RESULTS =================
 @login_required
 def results_view(request):
-    # Candidate model already has 'votes' integer field (denormalized count)
-    # vote_records is the related_name from Vote -> Candidate
-    elections = Election.objects.all().order_by('-start_time')
+    election   = Election.objects.filter(is_active=True).first()
     candidates = Candidate.objects.all().order_by('-votes')
 
     total_votes = Vote.objects.count()
-    winner = candidates.first() if candidates.exists() else None
+    winner      = candidates.first() if candidates.exists() else None
 
-    # Per-candidate vote % for chart
+    # ✅ Sirf election khatam hone ke baad results dikhao
+    results_visible = election.has_ended() if election else False
+
     candidates_data = []
     for c in candidates:
         pct = round((c.votes / total_votes * 100), 1) if total_votes > 0 else 0
         candidates_data.append({
-            'candidate': c,
+            'candidate':  c,
             'percentage': pct,
         })
 
     user_voted = Vote.objects.filter(user=request.user).exists()
-    user_vote = Vote.objects.filter(user=request.user).select_related('candidate').first()
+    user_vote  = Vote.objects.filter(user=request.user).select_related('candidate').first()
 
     context = {
-        'elections': elections,
+        'election':        election,
+        'candidates':      candidates,
         'candidates_data': candidates_data,
-        'total_votes': total_votes,
-        'winner': winner,
-        'user_voted': user_voted,
-        'user_vote': user_vote,
+        'total_votes':     total_votes,
+        'winner':          winner,
+        'user_voted':      user_voted,
+        'user_vote':       user_vote,
+        'results_visible': results_visible,  # ✅ Template mein use hoga
     }
     return render(request, 'results.html', context)
 
