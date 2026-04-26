@@ -116,12 +116,7 @@ WSGI_APPLICATION = 'voting_system.wsgi.application'
 # ═══════════════════════════════════════════════
 # DATABASE
 # ═══════════════════════════════════════════════
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join('/data', 'db.sqlite3'),
-    }
-}
+
 
 
 # ═══════════════════════════════════════════════
