@@ -162,7 +162,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 EMAIL_HOST_USER = 'singh2005any@gmail.com'        # 👉 apna Gmail
-EMAIL_HOST_PASSWORD = 'gyyylzjymwigzdic'   # 👉 App Password (NOT normal password)
+EMAIL_HOST_PASSWORD = 'muwfxvxbeurdazas'   # 👉 App Password (NOT normal password)
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # ═══════════════════════════════════════════════
